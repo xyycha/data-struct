@@ -45,7 +45,7 @@ def pre_order_to_binary_tree(pre_order: str) -> None:
 
 def _pre_order_to_binary_tree(pre_order: str) -> Node:
     """
-    将 后续表达式 转化为 二叉树 返回根节点
+    将 前续表达式 转化为 二叉树 返回根节点
     :param pre_order: 前序表达式
     :return: 树的根节点
     """
