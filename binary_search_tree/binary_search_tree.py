@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from print_tree import Node, show_binary_tree
+from tree_to_pdf.print_tree import Node, show_binary_tree
 
 
 __author__ = "xyy"
