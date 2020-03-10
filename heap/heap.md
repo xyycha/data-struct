@@ -1,6 +1,6 @@
 1. 完全二叉树
     - 定义：二叉树的深度为h，除第 h 层外，其它各层 (1～h-1) 的结点数都达到最大个数，第 h 层所有的结点都连续集中在最左边
-    - ![完全二叉树示例](http://image.sprinkle.top/image/tree/complete_binary_tree.jpeg)
+    - 图像示例: ![完全二叉树示例](http://image.sprinkle.top/image/tree/complete_binary_tree.jpeg)
     - 性质: 二叉树可以使用 数组heap[] 表示. 
         - heap[index]节点的 父节点为 heap[(index - 1) // 2 ]  子节点为 heap[2 * index + 1] heap[2 * index + 2]
         - 第index(1, 2, 3 ...)节点 heap[index - 1] 的 父节点为 heap[index // 2 - 1] 子节点为 heap[index * 2 - 1] heap[index * 2]
