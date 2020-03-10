@@ -25,12 +25,10 @@ class Heap(object):
         if index > self.cap:
             return -1
         self._heap.append(None)
-        while index > 1:
+        while index >= 1:
             father_index = index // 2
-            if node.value < self._heap[father_index - 1].value:
+            if index != 1 and node.value < self._heap[father_index - 1].value:
                 self._heap[index - 1] = self._heap[father_index - 1]
-                if father_index == 1:
-                    self._heap[0] = node
             else:
                 self._heap[index - 1] = node
                 break
