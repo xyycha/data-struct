@@ -2,7 +2,6 @@
 from tree_to_pdf.print_tree import Node, show_binary_tree
 
 
-__author__ = "xyy"
 legal_operation = ("+", "-", "*", "/")
 post_order_expression = "abc*+de*f+g*+"
 pre_order_expression = "++a*bc*+*defg"

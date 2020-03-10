@@ -2,9 +2,6 @@
 from tree_to_pdf.print_tree import Node, show_binary_tree
 
 
-__author__ = "xyy"
-
-
 class BinarySearchTree(object):
     def __init__(self, root: Node = None):
         """
