@@ -14,8 +14,7 @@ class Heap(object):
         self._heap = []
 
     def show(self):
-        for i in self._heap:
-            print(i)
+        print(self._heap)
 
     def insert(self, node: HeapNode):
         if not self._heap:
