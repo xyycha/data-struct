@@ -7,7 +7,7 @@
     - [完全二叉树]详细信息(https://baike.baidu.com/item/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91/7773232?fr=aladdin)
 
 2. 堆定义:
-    - [完全二叉树](https://baike.baidu.com/item/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91/7773232?fr=aladdin)
+    - 完全二叉树
     - 父节点的值 小于等于子节点的值
 
 3. 堆操作:
