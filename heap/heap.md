@@ -4,7 +4,7 @@
     - 性质: 二叉树可以使用 数组heap[] 表示. 
         - heap[index]节点的 父节点为 heap[(index - 1) // 2 ]  子节点为 heap[2 * index + 1] heap[2 * index + 2]
         - 第index(1, 2, 3 ...)节点 heap[index - 1] 的 父节点为 heap[index // 2 - 1] 子节点为 heap[index * 2 - 1] heap[index * 2]
-    - [完全二叉树]详细信息(https://baike.baidu.com/item/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91/7773232?fr=aladdin)
+    - [完全二叉树](https://baike.baidu.com/item/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91/7773232?fr=aladdin)
 
 2. 堆定义:
     - 完全二叉树
