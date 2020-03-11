@@ -11,9 +11,14 @@ class AVLTreeNode(object):
         self.flag = 1
 
     def refresh_height(self):
-        if self is None:
-            self.height = -1
-        self.height = max(self.left.height, self.right.height) + 1
+        if self.left is None and self.right is None:
+            self.height = 0
+        elif self.left is None:
+            self.height = self.right.height + 1
+        elif self.right is None:
+            self.height = self.left.height + 1
+        else:
+            self.height = max(self.left.height, self.right.height) + 1
 
     def left_rotate(self):
         temp_key = self.key
@@ -66,5 +71,30 @@ class AVLTree(object):
             insert_path[-1].right = AVLTreeNode(key=key)
         else:
             insert_path[-1].left = AVLTreeNode(key=key)
-        for node in insert_path[:-1:-1]:
-            pass
+        insert_path = insert_path[::-1]
+        for index, node in enumerate(insert_path):
+            node.refresh_height()
+            if index == 0:
+                continue
+            if node.height < 2:
+                continue
+            elif node.left is not None and node.right is not None and abs(node.left.height - node.right.height) <= 1:
+                continue
+            if node.left == insert_path[index - 1] and key < insert_path[index - 1].key:
+                node.left_rotate()
+            elif node.left == insert_path[index - 1]:
+                insert_path[index - 1].right_rotate()
+                node.left_rotate()
+            elif key > insert_path[index - 1].key:
+                node.right_rotate()
+            else:
+                insert_path[index - 1].left_rotate()
+                node.right_rotate()
+        return 1
+
+
+avl = AVLTree(root=None)
+elements = [5, 2, 12, 1, 4, 7, 3, 6, 10]
+for element in elements:
+    avl.insert(key=element)
+
