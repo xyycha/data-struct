@@ -112,10 +112,41 @@ class AVLTree(object):
             break
         return 1
 
+    def delete(self, key):
+        index_node = self.root
+        while index_node is not None:
+            if key < index_node.key:
+                index_node = index_node.left
+            elif key > index_node.key:
+                index_node = index_node.right
+            elif index_node.flag == 1:
+                index_node.flag = 0
+                return 1
+            else:
+                return 0
+        return -1
+
+    def find(self, key):
+        index_node = self.root
+        while index_node is not None:
+            if key < index_node.key:
+                index_node = index_node.left
+            elif key > index_node.key:
+                index_node = index_node.right
+            elif index_node.flag == 1:
+                return index_node
+            else:
+                break
+        return None
+
 
 if __name__ == "__main__":
     avl = AVLTree(root=None)
     elements = [5, 2, 12, 1, 4, 7, 3, 6, 10]
     for element in elements:
         avl.insert(key=element)
+    print(avl.delete(7))
+    print(avl.delete(7))
+    print(avl.find(7))
+    print(avl.find(2).key)
     print("end")
