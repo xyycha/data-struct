@@ -74,8 +74,6 @@ class AVLTree(object):
         insert_path = insert_path[::-1]
         for index, node in enumerate(insert_path):
             node.refresh_height()
-            if index == 0:
-                continue
             if node.height < 2:
                 continue
             elif node.left is not None and node.right is not None and abs(node.left.height - node.right.height) <= 1:
@@ -93,8 +91,8 @@ class AVLTree(object):
         return 1
 
 
-avl = AVLTree(root=None)
-elements = [5, 2, 12, 1, 4, 7, 3, 6, 10]
-for element in elements:
-    avl.insert(key=element)
-
+if __name__ == "__main__":
+    avl = AVLTree(root=None)
+    elements = [5, 2, 12, 1, 4, 7, 3, 6, 10]
+    for element in elements:
+        avl.insert(key=element)
