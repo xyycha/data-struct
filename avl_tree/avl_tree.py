@@ -54,40 +54,62 @@ class AVLTree(object):
         self.root = root
 
     def insert(self, key):
+        # 树为空, 新建节点，根为新建节点
         if self.root is None:
             self.root = AVLTreeNode(key=key)
             return 1
+        # 记录插入的节点路径  需要校核路径上的平衡
         insert_path = []
         index_node = self.root
         while index_node is not None:
             insert_path.append(index_node)
+            # 左子树寻找
             if key < index_node.key:
                 index_node = index_node.left
+            # 右子树寻找
             elif key > index_node.key:
                 index_node = index_node.right
+            # 已存在  直接返回
             else:
                 return 0
+        # 进行插入 操作
         if key > insert_path[-1].key:
             insert_path[-1].right = AVLTreeNode(key=key)
         else:
             insert_path[-1].left = AVLTreeNode(key=key)
+        # 倒叙 校核节点的平衡性
         insert_path = insert_path[::-1]
         for index, node in enumerate(insert_path):
+            # 记录原始高度
+            old_height = node.height
+            # 进行了插入动作，重新计算高度
             node.refresh_height()
+            # 如果插入动作不再改变节点的高度 停止遍历
+            if old_height == node.height:
+                break
+            # 高度小于2的节点 不需要校核平衡
             if node.height < 2:
                 continue
-            elif node.left is not None and node.right is not None and abs(node.left.height - node.right.height) <= 1:
+            # 高度 大于等于2的节点 在 左右子树存在 且 高度差小于2 的情况下 不需要校核平衡
+            elif node.left is not None and node.right is not None and abs(node.left.height - node.right.height) < 2:
                 continue
+            # 不满足上面条件的需要校核平衡
+            # 节点的左节点的左子树进行了插入
             if node.left == insert_path[index - 1] and key < insert_path[index - 1].key:
                 node.left_rotate()
+            # 节点的左节点的右子树进行了插入
             elif node.left == insert_path[index - 1]:
                 insert_path[index - 1].right_rotate()
                 node.left_rotate()
+            # 节点的右节点的右子树进行了插入
             elif key > insert_path[index - 1].key:
                 node.right_rotate()
+            # 节点的右节点的左子树进行了插入
             else:
                 insert_path[index - 1].left_rotate()
                 node.right_rotate()
+            # 已找到第一个失去平衡的节点并调整完毕 停止遍历
+            break
         return 1
 
 
@@ -96,3 +118,4 @@ if __name__ == "__main__":
     elements = [5, 2, 12, 1, 4, 7, 3, 6, 10]
     for element in elements:
         avl.insert(key=element)
+    print("end")
