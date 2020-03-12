@@ -1,8 +1,10 @@
 # -*- encoding: utf-8 -*-
+from tree_to_pdf.print_tree import Node
 
 
-class AVLTreeNode(object):
+class AVLTreeNode(Node):
     def __init__(self, key):
+        super(AVLTreeNode, self).__init__(key=key)
         self.key = key
         self.left = None
         self.right = None
@@ -145,8 +147,6 @@ if __name__ == "__main__":
     elements = [5, 2, 12, 1, 4, 7, 3, 6, 10]
     for element in elements:
         avl.insert(key=element)
-    print(avl.delete(7))
-    print(avl.delete(7))
-    print(avl.find(7))
-    print(avl.find(2).key)
-    print("end")
+    root = avl.root
+    if root is not None:
+        root.show(file_name="AVL 插入")

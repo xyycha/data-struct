@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from tree_to_pdf.print_tree import Node, show_binary_tree
+from tree_to_pdf.print_tree import Node
 
 
 legal_operation = ("+", "-", "*", "/")
@@ -29,7 +29,7 @@ def post_order_to_binary_tree(post_order: str) -> None:
             tip = "字符 %s 不在范围内" % char
             assert False, tip
     assert len(variables) == 1, "表达式有问题"
-    show_binary_tree("后缀表达式", variables[0])
+    variables[0].show(file_name="后缀表达式")
 
 
 def pre_order_to_binary_tree(pre_order: str) -> None:
@@ -39,7 +39,7 @@ def pre_order_to_binary_tree(pre_order: str) -> None:
     :return: None or Raise
     """
     root = _pre_order_to_binary_tree(pre_order=pre_order)
-    show_binary_tree("前缀表达式", root)
+    root.show(file_name="前缀表达式")
 
 
 def _pre_order_to_binary_tree(pre_order: str) -> Node:

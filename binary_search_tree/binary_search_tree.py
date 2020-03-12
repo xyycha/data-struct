@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from tree_to_pdf.print_tree import Node, show_binary_tree
+from tree_to_pdf.print_tree import Node
 
 
 class BinarySearchTree(object):
@@ -8,10 +8,7 @@ class BinarySearchTree(object):
         初始化 二叉搜索树
         :param root: 根节点 默认为None
         """
-        self._root = root
-
-    def root(self):
-        return self._root
+        self.root = root
 
     def insert(self, key):
         """
@@ -20,12 +17,12 @@ class BinarySearchTree(object):
         :return: 插入成功：1   已存在：0
         """
         # 根节点为空
-        if self._root is None:
+        if self.root is None:
             new_node = Node(key=key)
-            self._root = new_node
+            self.root = new_node
             return 1
         # 遍历 二叉搜索树
-        index_node = self._root
+        index_node = self.root
         while True:
             # 位于 右子树
             if key > index_node.key:
@@ -62,7 +59,7 @@ class BinarySearchTree(object):
         :return: 查询成功: 节点   不存在：None
         """
         pre_node = None
-        index_node = self._root
+        index_node = self.root
         while index_node is not None:
             if key > index_node.key:
                 pre_node = index_node
@@ -87,7 +84,7 @@ class BinarySearchTree(object):
         if target_node.left is None and target_node.right is not None:
             # 单子树节点  使用子节点代替 父节点 即可
             if pre_node is None:
-                self._root = target_node.right
+                self.root = target_node.right
             elif pre_node.left == target_node:
                 pre_node.left = target_node.right
             else:
@@ -106,7 +103,7 @@ class BinarySearchTree(object):
         elif target_node.right is None and target_node.left is not None:
             # 单子树节点  使用子节点代替 父节点 即可
             if pre_node is None:
-                self._root = target_node.left
+                self.root = target_node.left
             elif pre_node.left == target_node:
                 pre_node.left = target_node.left
             else:
@@ -152,18 +149,19 @@ def test1():
     s.insert(9)
     s.insert(8)
     s.insert(2)
-    show_binary_tree("原始二叉搜索树", s.root())
+    s.root.show("初始")
 
     s.delete(5)
-    show_binary_tree("删除节点 5", s.root())
+    s.root.show("删除节点 5")
 
     s.delete(7)
-    show_binary_tree("删除节点 7", s.root())
+    s.root.show("删除节点 7")
 
     s.insert(7)
-    show_binary_tree("插入节点 7", s.root())
+    s.root.show("插入节点 7")
+
     s.insert(5)
-    show_binary_tree("插入节点 5", s.root())
+    s.root.show("插入节点 5")
 
 
 def test2():
@@ -175,7 +173,7 @@ def test2():
     s.insert(1)
 
     s.delete(5)
-    show_binary_tree("单左树测试", s.root())
+    s.root.show("单左树测试")
 
 
 if __name__ == "__main__":
