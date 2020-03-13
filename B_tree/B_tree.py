@@ -4,18 +4,63 @@ import math
 from tree_to_pdf.print_tree import Node
 
 
+def move_element_between_brother(father_node, src_index, des_index):
+    if des_index < src_index:
+        # 从本节点开始 与 父节点 交换关键字  父节点与 本节点的兄弟节点交换关键字
+        # 本节点的 子节点的 第一个节点  添加到  其兄弟节点的 子节点的最后
+        for step in range(src_index - des_index):
+            node = father_node.next_nodes[src_index - step]
+            move_key = node.key_list.pop(0)
+            move_node = None
+            if node.next_nodes:
+                move_node = node.next_nodes.pop(0)
+            father_old_key = father_node.key_list[src_index - step - 1]
+            father_node.key_list[src_index - step - 1] = move_key
+            front_node = father_node.next_nodes[src_index - step - 1]
+            front_node.key_list.append(father_old_key)
+            if move_node:
+                front_node.next_nodes.append(move_node)
+    # 是本节点 右边的兄弟节点
+    # 具体类似 左边的兄弟节点
+    else:
+        for step in range(des_index - src_index):
+            node = father_node.next_nodes[src_index + step]
+            move_key = node.key_list.pop()
+            move_node = None
+            if node.next_nodes:
+                move_node = node.next_nodes.pop()
+            father_old_key = father_node.key_list[src_index + step]
+            father_node.key_list[src_index + step] = move_key
+            post_node = father_node.next_nodes[src_index + step + 1]
+            post_node.key_list.insert(0, father_old_key)
+            if move_node:
+                post_node.next_nodes.insert(0, move_node)
+
+
+def find_nearest_true(status_list, index):
+    target_index = index
+    for distance in range(1, max(index + 1, len(status_list) - index)):
+        left_index = max(index - distance, 0)
+        right_index = min(index + distance, len(status_list) - 1)
+        if status_list[left_index]:
+            target_index = left_index
+        elif status_list[right_index]:
+            target_index = right_index
+    return target_index
+
+
 class BTreeNode(Node):
     def __init__(self, keys: list, nodes: list):
         super(BTreeNode, self).__init__(keys=keys, nodes=nodes)
 
     def get_next_node(self, key):
+        if key in self.key_list:
+            return self
         if not self.next_nodes:
             return None
         for index, value in enumerate(self.key_list):
             if key < value:
                 return self.next_nodes[index]
-            elif key == value:
-                return self
         return self.next_nodes[-1]
 
     def insert(self, key, node=None):
@@ -30,10 +75,30 @@ class BTreeNode(Node):
         if node is not None:
             self.next_nodes = self.next_nodes[:index+1] + [node] + self.next_nodes[index+1:]
 
-    def check_status(self, m):
+    def check_top_status(self, m):
         if len(self.key_list) >= m:
             return False
         return True
+
+    def check_floor_status(self, m):
+        if len(self.key_list) <= math.ceil(m / 2) - 2:
+            return False
+        return True
+
+    def check_floor_status_for_root_no_leaf(self):
+        if len(self.key_list) <= 1:
+            return False
+        return True
+
+    def check_insert(self, m):
+        if len(self.key_list) < m - 1:
+            return True
+        return False
+
+    def check_delete(self, m):
+        if len(self.key_list) > math.ceil(m / 2) - 1:
+            return True
+        return False
 
     def split_keys(self):
         index = math.ceil(len(self.key_list) / 2) - 1
@@ -70,85 +135,19 @@ class BTree(object):
         if key in index_node.key_list:
             return 0
         index_node.insert(key=key)
-        while not index_node.check_status(m=self.M):
-            key, node = index_node.split_keys()
-            if index_path:
-                father_node = index_path.pop()
-                father_node.insert(key=key, node=node)
-                index_node = father_node
-            else:
-                new_root = BTreeNode(keys=[key], nodes=[index_node, node])
-                self.root = new_root
-                break
-        return 1
-
-    def new_insert(self, key):
-        index_node = self.root
-        index_path = []
-        if self.root is None:
-            new_root = BTreeNode(keys=[key], nodes=[])
-            self.root = new_root
-            return 1
-        # 先找到叶子节点   叶子节点的next_nodes 为空列表
-        while index_node.next_nodes:
-            index_path.append(index_node)
-            next_node = index_node.get_next_node(key=key)
-            # 该值已在 节点 中
-            if next_node == index_node:
-                return 0
-            index_node = next_node
-        # 判断是否在叶子节点
-        if key in index_node.key_list:
-            return 0
-        index_node.insert(key=key)
-        while not index_node.check_status(m=self.M):
+        while not index_node.check_top_status(m=self.M):
             # 存在父节点
             if index_path:
                 father_node = index_path.pop()
                 # 找到父节点到本节点的路径
                 index = father_node.next_nodes.index(index_node)
                 # 检查兄弟节点是否可以 插入
-                brother_nodes_status = [node.check_status(m=self.M - 1)for node in father_node.next_nodes]
+                brother_nodes_status = [node.check_insert(m=self.M)for node in father_node.next_nodes]
                 # 兄弟节点 可以 插入
                 if any(brother_nodes_status):
                     # 寻找 到本节点 最近的 可插入兄弟节点
-                    left_index = right_index = index
-                    for i in range(1, max(index + 1, len(father_node.next_nodes) - index)):
-                        left_index = max(index - i, 0)
-                        right_index = min(index + i, len(father_node.next_nodes) - 1)
-                        if brother_nodes_status[left_index] or brother_nodes_status[right_index]:
-                            break
-                    # 是 本节点的 左边的兄弟节点
-                    if brother_nodes_status[left_index]:
-                        # 从本节点开始 与 父节点 交换关键字  父节点与 本节点的兄弟节点交换关键字
-                        # 本节点的 子节点的 第一个节点  添加到  其兄弟节点的 子节点的最后
-                        for step in range(index - left_index):
-                            node = father_node.next_nodes[index - step]
-                            move_key = node.key_list.pop(0)
-                            move_node = None
-                            if node.next_nodes:
-                                move_node = node.next_nodes.pop(0)
-                            father_old_key = father_node.key_list[index - step - 1]
-                            father_node.key_list[index - step - 1] = move_key
-                            front_node = father_node.next_nodes[index - step - 1]
-                            front_node.key_list.append(father_old_key)
-                            if move_node:
-                                front_node.next_nodes.append(move_node)
-                    # 是本节点 右边的兄弟节点
-                    # 具体类似 左边的兄弟节点
-                    else:
-                        for step in range(right_index - index):
-                            node = father_node.next_nodes[index + step]
-                            move_key = node.key_list.pop()
-                            move_node = None
-                            if node.next_nodes:
-                                move_node = node.next_nodes.pop()
-                            father_old_key = father_node.key_list[index + step]
-                            father_node.key_list[index + step] = move_key
-                            post_node = father_node.next_nodes[index + step + 1]
-                            post_node.key_list.insert(0, father_old_key)
-                            if move_node:
-                                post_node.next_nodes.insert(0, move_node)
+                    target_index = find_nearest_true(status_list=brother_nodes_status, index=index)
+                    move_element_between_brother(father_node=father_node, src_index=index, des_index=target_index)
                     return 1
                 # 兄弟节点 都不在允许插入
                 # 需要分解 该节点
@@ -163,14 +162,63 @@ class BTree(object):
                 break
         return 1
 
+    def delete(self, key):
+        index_node = self.root
+        if index_node is None:
+            return -1
+        index_path = []
+        while index_node:
+            next_node = index_node.get_next_node(key=key)
+            # 该值在 节点 中
+            if next_node == index_node:
+                break
+            elif not next_node:
+                return 0
+            else:
+                index_node = next_node
+                index_path.append(index_node)
+        # 删除 关键字
+        index = index_node.key_list.index(key)
+        index_node.key_list.pop(index)
+        # 删除叶子节点 的 关键字 非 根节点
+        if not index_node.next_nodes and len(index_path) > 0:
+            # 叶子节点不可以删除 关键字
+            if not index_node.check_floor_status(m=self.M):
+                father_node = index_path.pop()
+                index = father_node.next_nodes.index[index_node]
+                brother_nodes_status = [node.check_delete(m=self.M) for node in father_node.next_nodes]
+                if any(brother_nodes_status):
+                    # 存在 兄弟节点可以 提供一个 关键字
+                    target_index = find_nearest_true(status_list=brother_nodes_status, index=index)
+                    move_element_between_brother(father_node=father_node, src_index=target_index, des_index=index_node)
+                else:
+                    # 合并 临近的 兄弟节点
+                    length = len(brother_nodes_status)
+                    new_key = father_node.key_list.pop(index) if index != length - 1 else father_node.key_list.pop()
+                    old_left_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
+                    old_right_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
+                    keys = old_left_node.key_list + [new_key] + old_right_node.key_list
+                    new_node = BTreeNode(keys=keys, nodes=[])
+                    father_node.next_nodes[index] = new_node
+        # 删除非叶子节点 关键字
+        elif index_node.next_nodes:
+            left_son = index_node.next_nodes.pop(index)
+            right_son = index_node.next_nodes.pop(index)
+            keys = left_son.key_list + right_son.key_list
+            nodes = left_son.next_nodes + right_son.next_nodes
+            new_node = BTreeNode(keys=keys, nodes=nodes)
+            index_node.next_nodes.insert(index, new_node)
+            if not new_node.check_top_status(m=self.M):
+                new_key, new_right_node = new_node.split_keys()
+                index_node.key_list.insert(index, new_key)
+                index_node.next_nodes.insert(index + 1, new_right_node)
+            elif index_node == self.root and len(index_node.key_list) == 0:
+                self.root = new_node
+        return 1
+
 
 if __name__ == "__main__":
     b = BTree(m=5)
     for i in range(20):
         b.insert(key=i)
-    b.root.show_m_nodes(file_name="B-树 初始版")
-    b = BTree(m=5)
-    for i in range(20):
-        b.new_insert(key=i)
-    b.root.show_m_nodes(file_name="B-树 修改版")
-
+    b.root.show_m_nodes(file_name="B-树")
