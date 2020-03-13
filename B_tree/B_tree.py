@@ -44,8 +44,10 @@ def find_nearest_true(status_list, index):
         right_index = min(index + distance, len(status_list) - 1)
         if status_list[left_index]:
             target_index = left_index
+            break
         elif status_list[right_index]:
             target_index = right_index
+            break
     return target_index
 
 
@@ -175,22 +177,22 @@ class BTree(object):
             elif not next_node:
                 return 0
             else:
-                index_node = next_node
                 index_path.append(index_node)
+                index_node = next_node
         # 删除 关键字
-        index = index_node.key_list.index(key)
-        index_node.key_list.pop(index)
+        delete_index = index_node.key_list.index(key)
+        index_node.key_list.pop(delete_index)
         # 删除叶子节点 的 关键字 非 根节点
         if not index_node.next_nodes and len(index_path) > 0:
             # 叶子节点不可以删除 关键字
             if not index_node.check_floor_status(m=self.M):
                 father_node = index_path.pop()
-                index = father_node.next_nodes.index[index_node]
+                index = father_node.next_nodes.index(index_node)
                 brother_nodes_status = [node.check_delete(m=self.M) for node in father_node.next_nodes]
                 if any(brother_nodes_status):
                     # 存在 兄弟节点可以 提供一个 关键字
                     target_index = find_nearest_true(status_list=brother_nodes_status, index=index)
-                    move_element_between_brother(father_node=father_node, src_index=target_index, des_index=index_node)
+                    move_element_between_brother(father_node=father_node, src_index=target_index, des_index=index)
                 else:
                     # 合并 临近的 兄弟节点
                     length = len(brother_nodes_status)
@@ -202,16 +204,18 @@ class BTree(object):
                     father_node.next_nodes[index] = new_node
         # 删除非叶子节点 关键字
         elif index_node.next_nodes:
-            left_son = index_node.next_nodes.pop(index)
-            right_son = index_node.next_nodes.pop(index)
+            # bug 1
+            # todo: 需要迭代到 叶子节点 然后叶子节点 向上开始分裂
+            left_son = index_node.next_nodes.pop(delete_index)
+            right_son = index_node.next_nodes.pop(delete_index)
             keys = left_son.key_list + right_son.key_list
             nodes = left_son.next_nodes + right_son.next_nodes
             new_node = BTreeNode(keys=keys, nodes=nodes)
-            index_node.next_nodes.insert(index, new_node)
+            index_node.next_nodes.insert(delete_index, new_node)
             if not new_node.check_top_status(m=self.M):
                 new_key, new_right_node = new_node.split_keys()
-                index_node.key_list.insert(index, new_key)
-                index_node.next_nodes.insert(index + 1, new_right_node)
+                index_node.key_list.insert(delete_index, new_key)
+                index_node.next_nodes.insert(delete_index + 1, new_right_node)
             elif index_node == self.root and len(index_node.key_list) == 0:
                 self.root = new_node
         return 1
@@ -219,6 +223,14 @@ class BTree(object):
 
 if __name__ == "__main__":
     b = BTree(m=5)
-    for i in range(20):
+    for i in range(50):
         b.insert(key=i)
     b.root.show_m_nodes(file_name="B-树")
+    b.delete(24)
+    b.root.show_m_nodes(file_name="删除24")
+    b.delete(39)
+    b.root.show_m_nodes(file_name="删除39")
+    b.delete(14)
+    b.root.show_m_nodes(file_name="删除14")
+    b.delete(34)
+    b.root.show_m_nodes(file_name="删除34")
