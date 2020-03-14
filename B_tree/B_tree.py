@@ -51,6 +51,26 @@ def find_nearest_true(status_list, index):
     return target_index
 
 
+def merge_node(father_node, index, m, root):
+    left_son = father_node.next_nodes.pop(index)
+    right_son = father_node.next_nodes.pop(index)
+    keys = left_son.key_list + right_son.key_list
+    nodes = left_son.next_nodes + right_son.next_nodes
+    new_node = BTreeNode(keys=keys, nodes=nodes)
+    father_node.next_nodes.insert(index, new_node)
+    if new_node.next_nodes:
+        second_index = len(left_son.key_list)
+        merge_node(father_node=new_node, index=second_index, m=m, root=root)
+    if not new_node.check_top_status(m=m):
+        new_key, new_right_node = new_node.split_keys()
+        father_node.key_list.insert(index, new_key)
+        father_node.next_nodes.insert(index + 1, new_right_node)
+        print("1")
+    elif father_node == root and len(father_node.key_list) == 0:
+        root.key_list = new_node.key_list
+        root.next_nodes = new_node.next_nodes
+
+
 class BTreeNode(Node):
     def __init__(self, keys: list, nodes: list):
         super(BTreeNode, self).__init__(keys=keys, nodes=nodes)
@@ -87,8 +107,8 @@ class BTreeNode(Node):
             return False
         return True
 
-    def check_floor_status_for_root_no_leaf(self):
-        if len(self.key_list) <= 1:
+    def check_floor_status_for_root(self):
+        if len(self.key_list) < 1:
             return False
         return True
 
@@ -182,42 +202,35 @@ class BTree(object):
         # 删除 关键字
         delete_index = index_node.key_list.index(key)
         index_node.key_list.pop(delete_index)
-        # 删除叶子节点 的 关键字 非 根节点
-        if not index_node.next_nodes and len(index_path) > 0:
-            # 叶子节点不可以删除 关键字
-            if not index_node.check_floor_status(m=self.M):
-                father_node = index_path.pop()
-                index = father_node.next_nodes.index(index_node)
-                brother_nodes_status = [node.check_delete(m=self.M) for node in father_node.next_nodes]
-                if any(brother_nodes_status):
-                    # 存在 兄弟节点可以 提供一个 关键字
-                    target_index = find_nearest_true(status_list=brother_nodes_status, index=index)
-                    move_element_between_brother(father_node=father_node, src_index=target_index, des_index=index)
-                else:
-                    # 合并 临近的 兄弟节点
-                    length = len(brother_nodes_status)
-                    new_key = father_node.key_list.pop(index) if index != length - 1 else father_node.key_list.pop()
-                    old_left_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
-                    old_right_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
-                    keys = old_left_node.key_list + [new_key] + old_right_node.key_list
-                    new_node = BTreeNode(keys=keys, nodes=[])
-                    father_node.next_nodes[index] = new_node
         # 删除非叶子节点 关键字
-        elif index_node.next_nodes:
-            # bug 1
-            # todo: 需要迭代到 叶子节点 然后叶子节点 向上开始分裂
-            left_son = index_node.next_nodes.pop(delete_index)
-            right_son = index_node.next_nodes.pop(delete_index)
-            keys = left_son.key_list + right_son.key_list
-            nodes = left_son.next_nodes + right_son.next_nodes
-            new_node = BTreeNode(keys=keys, nodes=nodes)
-            index_node.next_nodes.insert(delete_index, new_node)
-            if not new_node.check_top_status(m=self.M):
-                new_key, new_right_node = new_node.split_keys()
-                index_node.key_list.insert(delete_index, new_key)
-                index_node.next_nodes.insert(delete_index + 1, new_right_node)
-            elif index_node == self.root and len(index_node.key_list) == 0:
-                self.root = new_node
+        if index_node.next_nodes:
+            merge_node(father_node=index_node, index=delete_index, m=self.M, root=self.root)
+
+        while not index_node.check_floor_status(m=self.M):
+            if (not index_path) and not index_node.check_floor_status_for_root():
+                assert len(self.root.next_nodes) == 1, "迭代有问题，根节点的子节点树不是1"
+                self.root = self.root.next_nodes[0]
+                break
+            if not index_path:
+                break
+            father_node = index_path.pop()
+            index = father_node.next_nodes.index(index_node)
+            brother_nodes_status = [node.check_delete(m=self.M) for node in father_node.next_nodes]
+            if any(brother_nodes_status):
+                # 存在 兄弟节点可以 提供一个 关键字
+                target_index = find_nearest_true(status_list=brother_nodes_status, index=index)
+                move_element_between_brother(father_node=father_node, src_index=target_index, des_index=index)
+                break
+            else:
+                # 合并 临近的 兄弟节点
+                length = len(brother_nodes_status)
+                new_key = father_node.key_list.pop(index) if index != length - 1 else father_node.key_list.pop()
+                old_left_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
+                old_right_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
+                keys = old_left_node.key_list + [new_key] + old_right_node.key_list
+                new_node = BTreeNode(keys=keys, nodes=[])
+                father_node.next_nodes[index] = new_node
+                index_node = father_node
         return 1
 
 
