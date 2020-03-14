@@ -6,6 +6,7 @@
     
 2. M阶B-树性质
     - 平衡的多叉树
+    - 节点内 关键字个数必须大于等于1  所以 ceil(M/2)-1 >= 1  M >= 3 B树最小是3阶
     
 3. M阶B-树操作
     - M阶B-树插入(2020-03-12 21:56 success)
@@ -29,4 +30,38 @@
                     - 可以 进行 移动元素操作  结束
                     - 不可以 合并 节点A、父节点的关键字、最近的兄弟节点成为新的节点  父节点作为节点A迭代检查关键字个数
             - 满足 停止
-    
+            
+4. B树插入图像(m = 5)
+    1. 插入 4
+        - 之前 ![B树](http://image.sprinkle.top/image/tree/0-0.png)
+        - 之后 ![B树](http://image.sprinkle.top/image/tree/0-1.png)
+        - 注释
+            - 插入 4 到 根节点
+            - 根节点 不满足节点个数上限 m-1
+            - 根节点 分裂。分裂的关键字作为新的根节点，分裂出的两个节点作为左右子节点
+    2. 插入 7
+        - 之前 ![B树](http://image.sprinkle.top/image/tree/1-0.png)
+        - 之后 ![B树](http://image.sprinkle.top/image/tree/1-1.png)
+        - 注释
+            - 插入 7 到 根节点的右节点
+            - 右节点 不满足节点个数上限 m-1
+            - 检查 兄弟节点是否可以添加 一个关键字
+                - 3 移动到根节点  2 移动到左节点 达到平衡
+                
+    3. 插入 24
+        - 之前 ![B树](http://image.sprinkle.top/image/tree/2-0.png)
+        - 之后 ![B树](http://image.sprinkle.top/image/tree/2-1.png)
+        - 注释
+            - 插入 24 到 根节点的最右节点
+            - 最右节点 不满足节点个数上限 m-1
+            - 检查 兄弟节点是否可以添加 一个关键字
+                - 否
+            - 分裂 最右节点 将分裂的节点添加到 父节点
+            - 检查父节点状态
+                - 需要再次分类
+            - 流程示意图 ![示意图](http://image.sprinkle.top/image/tree/insert_b_tree.jpg)
+            
+5. B树删除图像(m = 5)
+    - 初始图像 ![示意图](http://image.sprinkle.top/image/tree/delete_0.png)
+    - 最终图像 ![示意图](http://image.sprinkle.top/image/tree/delete_1.png)
+    - 流程图 ![示例图](http://image.sprinkle.top/image/tree/delete_b_tree.jpg)

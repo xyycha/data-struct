@@ -241,9 +241,8 @@ if __name__ == "__main__":
     b = BTree(m=5)
     for i in range(50):
         b.insert(key=i)
-    b.root.show_m_nodes(file_name="B-树")
+    b.root.show_m_nodes(file_name="B树")
     for i in range(49):
         root_key = b.root.key_list[0]
         b.delete(root_key)
-        if i % 4 == 0:
-            b.root.show_m_nodes(file_name="删除节点%d_B-树" % root_key)
+        b.root.show_m_nodes(file_name="删除节点%d_B-树" % root_key)
