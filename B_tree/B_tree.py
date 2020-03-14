@@ -65,7 +65,6 @@ def merge_node(father_node, index, m, root):
         new_key, new_right_node = new_node.split_keys()
         father_node.key_list.insert(index, new_key)
         father_node.next_nodes.insert(index + 1, new_right_node)
-        print("1")
     elif father_node == root and len(father_node.key_list) == 0:
         root.key_list = new_node.key_list
         root.next_nodes = new_node.next_nodes
@@ -208,8 +207,12 @@ class BTree(object):
 
         while not index_node.check_floor_status(m=self.M):
             if (not index_path) and not index_node.check_floor_status_for_root():
-                assert len(self.root.next_nodes) == 1, "迭代有问题，根节点的子节点树不是1"
-                self.root = self.root.next_nodes[0]
+                if len(self.root.next_nodes) == 1:
+                    self.root = self.root.next_nodes[0]
+                elif len(self.root.next_nodes) == 0:
+                    self.root = None
+                else:
+                    assert False, "迭代出现问题"
                 break
             if not index_path:
                 break
@@ -239,11 +242,8 @@ if __name__ == "__main__":
     for i in range(50):
         b.insert(key=i)
     b.root.show_m_nodes(file_name="B-树")
-    b.delete(24)
-    b.root.show_m_nodes(file_name="删除24")
-    b.delete(39)
-    b.root.show_m_nodes(file_name="删除39")
-    b.delete(14)
-    b.root.show_m_nodes(file_name="删除14")
-    b.delete(34)
-    b.root.show_m_nodes(file_name="删除34")
+    for i in range(49):
+        root_key = b.root.key_list[0]
+        b.delete(root_key)
+        if i % 4 == 0:
+            b.root.show_m_nodes(file_name="删除节点%d_B-树" % root_key)
