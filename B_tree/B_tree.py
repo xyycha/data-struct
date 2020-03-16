@@ -228,11 +228,14 @@ class BTree(object):
                 # 合并 临近的 兄弟节点
                 length = len(brother_nodes_status)
                 new_key = father_node.key_list.pop(index) if index != length - 1 else father_node.key_list.pop()
-                old_left_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
+                old_left_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop(-2)
                 old_right_node = father_node.next_nodes.pop(index) if index != length - 1 else father_node.next_nodes.pop()
                 keys = old_left_node.key_list + [new_key] + old_right_node.key_list
                 new_node = BTreeNode(keys=keys, nodes=[])
-                father_node.next_nodes[index] = new_node
+                if index != length - 1:
+                    father_node.next_nodes[index] = new_node
+                else:
+                    father_node.next_nodes.append(new_node)
                 index_node = father_node
         return 1
 
