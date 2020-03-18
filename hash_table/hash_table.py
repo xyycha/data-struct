@@ -58,7 +58,7 @@ class Bucket(object):
             if not node:
                 continue
             bucket_index = (node.hash_key & bucket_index_base) >> step
-            node_index = node.hash_key & self._max_node - 1
+            node_index = max((node.hash_key & self._max_node) - 1, 0)
             if bucket_index not in index:
                 new_bucket = Bucket(max_node=self._max_node)
                 new_bucket.insert_node(index=node_index, key=node.key, value=node.value, hash_key=node.hash_key)
@@ -71,9 +71,9 @@ class Bucket(object):
 
 
 class ExtendableHashTable(object):
-    max_bucket = 5
+    max_bucket = 3
 
-    def __init__(self, max_node=7):
+    def __init__(self, max_node=113):
         self.bucket = 1
         self.bucket_num = 1 << 1
         self.bucket_list = [None] * self.bucket_num
@@ -161,10 +161,10 @@ class ExtendableHashTable(object):
 
 if __name__ == "__main__":
     hash_table = ExtendableHashTable()
-    for i in range(65, 80):
+    for i in range(1, 127):
         key = chr(i)
         hash_table.insert(key=key, value=i)
-    for i in range(65, 80):
+    for i in range(1, 127):
         key = chr(i)
         node = hash_table.find(key=key)
         if node is None:
