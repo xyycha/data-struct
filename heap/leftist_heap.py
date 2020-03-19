@@ -30,6 +30,10 @@ def merge(node1, heap_root):
     else:
         node1.right = heap_root
     node1.refresh_npl()
+    if node1.left is None or node1.left.npl < node1.right.npl:
+        old_left = node1.left
+        node1.left = node1.right
+        node1.right = old_left
 
 
 class LeftistHeapNode(Node):
@@ -63,14 +67,6 @@ class LeftistHeap(object):
             self.root = node
         else:
             merge(node1=self.root, heap_root=node)
-        if self.root.left is None or self.root.right is None:
-            old_right = self.root.right
-            self.root.right = None
-            self.root.left = old_right if old_right is not None else self.root.left
-        elif self.root.left.npl < self.root.right.npl:
-            old_right = self.root.right
-            self.root.right = self.root.left
-            self.root.left = old_right
 
     def pop(self):
         if self.root is None:
@@ -84,10 +80,6 @@ class LeftistHeap(object):
             right_tree = self.root.right
             self.root = self.root.left
             merge(node1=self.root, heap_root=right_tree)
-            if self.root.left.npl < self.root.right.npl:
-                old_right = self.root.right
-                self.root.right = self.root.left
-                self.root.left = old_right
         return root
 
 
