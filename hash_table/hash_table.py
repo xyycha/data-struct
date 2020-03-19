@@ -20,7 +20,7 @@ class Bucket(object):
     def __init__(self, max_node=113):
         # 初始化 桶的节点个数
         self.node_num = 0
-        # 桶的节点最大个数 和 填充因子 直接影响桶的分类速率
+        # 桶的节点最大个数 和 填充因子 直接影响桶的分裂速率
         # 初始化 桶的节点最大个数
         self._max_node = max_node
         # 填充因子
@@ -136,7 +136,7 @@ class Bucket(object):
 
 
 class ExtendableHashTable(object):
-    # 最大 桶 个数
+    # 最大 桶个数的二进制位数
     max_bucket = 3
     # associate with hash function as we use sha256. The result's most length is 256
     max_step = 256
