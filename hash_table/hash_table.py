@@ -136,7 +136,7 @@ class Bucket(object):
 
 
 class ExtendableHashTable(object):
-    # 最大 桶个数的二进制位数
+    # 最大 右移
     max_bucket = 3
     # associate with hash function as we use sha256. The result's most length is 256
     max_step = 256
