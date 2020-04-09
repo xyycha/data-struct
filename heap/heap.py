@@ -71,6 +71,25 @@ class Heap(object):
         self.heap[index - 1] = self.heap.pop()
         return top
 
+    def decrease_value(self, key, value):
+        for index, node in enumerate(self.heap):
+            node_key = node.info
+            if node_key == key:
+                break
+        son_index = index + 1
+        node.value -= value
+        father_index = son_index // 2
+        while father_index >= 1 and self.heap[father_index - 1].value > self.heap[son_index - 1].value:
+            self.swap_two_node(index1=father_index - 1, index2=son_index - 1)
+            son_index = father_index
+            father_index //= 2
+
+    def get_value(self, key):
+        for index, node in enumerate(self.heap):
+            node_key = node.info
+            if node_key == key:
+                return node.value
+
     def swap_two_node(self, index1, index2):
         # ??? self.heap[index1], self.heap[index2] = self.heap[index2], self.heap[index1]
         temp_value = self.heap[index1].value
