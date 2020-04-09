@@ -21,10 +21,10 @@ def find_core(nums):
     first_num = nums[0]
     last_num = nums[-1]
     mid_num = nums[length // 2]
-    res = (first_num >= mid_num) + 2 * (mid_num >= last_num) + 4 * (first_num >= last_num)
-    if res == 1 or res == 6:
+    flag = (first_num >= mid_num) + 2 * (mid_num >= last_num) + 4 * (first_num >= last_num)
+    if flag == 1 or flag == 6:
         return 0
-    if res == 2 or res == 5:
+    if flag == 2 or flag == 5:
         return length - 1
     return length // 2
 
