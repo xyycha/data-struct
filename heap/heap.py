@@ -14,108 +14,113 @@ class Heap(object):
     def __init__(self, cap):
         self.cap = cap
         self.size = 0
-        self.heap = []
+        self.heap = [None]
 
     def show(self, file_name=None):
         d = Digraph(filename=file_name, directory="./pdf_data")
         d.clear()
         node_name = []
         for node in self.heap:
+            if node is None:
+                node_name.append(None)
+                continue
             name = str(id(node))
             d.node(name=name, label=str(node.value))
             node_name.append(name)
-        max_father_index = self.size // 2 + 1
-        for father_index in range(1, max_father_index):
-            left_son_index = father_index * 2 - 1
-            right_son_index = father_index * 2
-            if left_son_index < self.size:
-                d.edge(head_name=node_name[left_son_index], tail_name=node_name[father_index - 1])
-            if right_son_index < self.size:
-                d.edge(head_name=node_name[right_son_index], tail_name=node_name[father_index - 1])
+        max_father_index = self.size // 2
+        for father_index in range(1, max_father_index + 1):
+            left_son_index = father_index * 2
+            right_son_index = father_index * 2 + 1
+            if left_son_index <= self.size:
+                d.edge(head_name=node_name[left_son_index], tail_name=node_name[father_index])
+            if right_son_index <= self.size:
+                d.edge(head_name=node_name[right_son_index], tail_name=node_name[father_index])
         d.view()
 
     def insert(self, node: HeapNode):
-        if not self.heap:
-            self.heap.append(node)
-            self.size += 1
-            return 1
-        index = self.size + 1
-        if index > self.cap:
-            return -1
         self.heap.append(None)
-        while index >= 1:
-            father_index = index // 2
-            if index != 1 and node.value < self.heap[father_index - 1].value:
-                self.heap[index - 1] = self.heap[father_index - 1]
-            else:
-                self.heap[index - 1] = node
-                break
-            index = father_index
         self.size += 1
+        index = self.size
+        while index > 1:
+            father_index = index // 2
+            if self.heap[father_index].value > node.value:
+                self.heap[index] = self.heap[father_index]
+                index = father_index
+            else:
+                break
+        self.heap[index] = node
         return 1
 
     def pop(self):
         assert self.size > 0, "空堆"
-        index = 1
-        top = self.heap[0]
+        first_node = self.heap[1]
+        last_node = self.heap.pop()
         self.size -= 1
-        while index * 2 <= self.size:
-            child = index * 2
-            if child != self.size and self.heap[child - 1].value > self.heap[child].value:
-                child += 1
-            if self.heap[child - 1].value < self.heap[self.size].value:
-                self.heap[index - 1] = self.heap[child - 1]
-            else:
+        if first_node == last_node:
+            return first_node
+        index = 1
+        while index <= self.size // 2:
+            left_son = self.heap[index * 2]
+            father_index = index
+            right_son_index = index * 2 + 1
+            self.heap[index] = left_son
+            if left_son.value < last_node.value:
+                index *= 2
+            if right_son_index <= self.size and self.heap[right_son_index].value < last_node.value and self.heap[right_son_index].value < self.heap[father_index].value:
+                self.heap[father_index] = self.heap[right_son_index]
+                index = right_son_index
+            if index == father_index:
                 break
-            index = child
-        self.heap[index - 1] = self.heap.pop()
-        return top
+        self.heap[index] = last_node
+        return first_node
 
-    def decrease_value(self, key, value):
-        for index, node in enumerate(self.heap):
-            node_key = node.info
+    def find_node_index(self, key):
+        for index in range(1, self.size + 1):
+            node_key = self.heap[index].info
             if node_key == key:
                 break
-        son_index = index + 1
-        node.value -= value
-        father_index = son_index // 2
-        while father_index >= 1 and self.heap[father_index - 1].value > self.heap[son_index - 1].value:
-            self.swap_two_node(index1=father_index - 1, index2=son_index - 1)
-            son_index = father_index
+        return index
+
+    def decrease_value(self, key, value):
+        index = self.find_node_index(key=key)
+        self.heap[index].value -= value
+        father_index = index // 2
+        while father_index >= 1 and self.heap[father_index].value > self.heap[index].value:
+            self.swap_two_node(index1=father_index, index2=index)
+            index = father_index
             father_index //= 2
 
     def get_value(self, key):
-        for index, node in enumerate(self.heap):
-            node_key = node.info
-            if node_key == key:
-                return node.value
+        index = self.find_node_index(key=key)
+        return self.heap[index].value
 
     def swap_two_node(self, index1, index2):
-        # ??? self.heap[index1], self.heap[index2] = self.heap[index2], self.heap[index1]
-        temp_value = self.heap[index1].value
-        temp_info = self.heap[index2].info
-        self.heap[index1].value = self.heap[index2].value
-        self.heap[index1].info = self.heap[index2].info
-        self.heap[index2].value = temp_value
-        self.heap[index2].info = temp_info
+        self.heap[index1], self.heap[index2] = self.heap[index2], self.heap[index1]
 
     def keep_father_lt_son(self, father_index):
-        max_father_index = self.size // 2
-        if father_index > max_father_index:
+        """
+        下滤 操作
+        :param father_index: 父节点下标
+        :return: None
+        """
+        if father_index > self.size // 2:
             return
-        left_index = father_index * 2 - 1
-        right_index = father_index * 2
-        if right_index < self.size and self.heap[right_index].value < self.heap[father_index - 1].value and self.heap[right_index].value < self.heap[left_index].value:
-            self.swap_two_node(right_index, father_index - 1)
-            return self.keep_father_lt_son(father_index=right_index + 1)
-        if self.heap[left_index].value < self.heap[father_index - 1].value:
-            self.swap_two_node(left_index, father_index - 1)
-            return self.keep_father_lt_son(father_index=left_index + 1)
+        left_index = father_index * 2
+        right_index = father_index * 2 + 1
+        index = father_index
+        if self.heap[left_index].value < self.heap[father_index].value:
+            index = left_index
+        if right_index <= self.size and self.heap[right_index].value < self.heap[father_index].value and self.heap[right_index].value < self.heap[left_index].value:
+            index = right_index
+        if index == father_index:
+            return
+        self.swap_two_node(index1=index, index2=father_index)
+        self.keep_father_lt_son(father_index=index)
 
     def build_heap(self, n: list):
         assert len(n) <= self.cap, "堆超限"
-        self.heap = n
-        self.size = len(self.heap)
+        self.heap.extend(n)
+        self.size = len(n)
         father_index = self.size // 2
         for index in range(father_index, 0, -1):
             self.keep_father_lt_son(father_index=index)
@@ -146,6 +151,7 @@ def test2():
         info = {"value": value, "key": str(value)}
         node = HeapNode(value=value, info=info)
         node_list.append(node)
+    print(pre_res)
     h = Heap(cap=20)
     h.build_heap(node_list)
     h.show(file_name="建立堆")
@@ -153,4 +159,4 @@ def test2():
 
 
 if __name__ == "__main__":
-    test1()
+    test2()

@@ -178,7 +178,8 @@ class Graph(object):
                     continue
                 new_distance = father_node_distance + weight
                 sub_distance = node_heap.get_value(key=son_node_name) - new_distance
-                if sub_distance:
+                if sub_distance > 0:
+                    status[son_node_name]["father_name"] = father_node_name
                     node_heap.decrease_value(key=son_node_name, value=sub_distance)
         return status
 
@@ -264,7 +265,12 @@ def topology():
     print(res)
 
 
-def distance_2_all_node(start_node_name):
+def distance_2_all_node_without_weight(start_node_name):
+    """
+    拓扑排序 计算 无权重的 节点间最短距离
+    :param start_node_name: 起始节点名
+    :return: 最短距离信息
+    """
     s = Graph()
     s.add_edge(node_name="V1", son_node_names=["V2", "V4"], weights=[2, 1])
     s.add_edge(node_name="V2", son_node_names=["V4", "V5"], weights=[3, 10])
@@ -280,13 +286,29 @@ def distance_2_all_node(start_node_name):
         father_node_name = distance_info.get("father_name")
         print("%s 到 %s 的最短路径是 %d. %s 的 父节点名是 %s" % (start_node_name, node_name, distance, node_name, father_node_name))
 
+
+def distance_2_all_node_with_weight(start_node_name):
+    """
+    Dijkstra 算法 计算 有权重的 节点间最短距离
+    :param start_node_name: 起始节点名
+    :return: 最短距离信息
+    """
+    s = Graph()
+    s.add_edge(node_name="V1", son_node_names=["V2", "V4"], weights=[2, 1])
+    s.add_edge(node_name="V2", son_node_names=["V4", "V5"], weights=[3, 10])
+    s.add_edge(node_name="V3", son_node_names=["V1", "V6"], weights=[4, 5])
+    s.add_edge(node_name="V4", son_node_names=["V3", "V6", "V7", "V5"], weights=[2, 8, 4, 2])
+    s.add_edge(node_name="V5", son_node_names=["V7"], weights=[6])
+    s.add_edge(node_name="V7", son_node_names=["V6"], weights=[1])
+    print("****************权重****************")
     distances_with_weight = s.all_distances_with_weight(start_node_name=start_node_name)
     for node_name, distance_info in distances_with_weight.items():
         if not distance_info.get("known"):
             print("%s 到 %s 的路径不存在." % (start_node_name, node_name))
-        distance = distance_info.get("distance")
-        father_node_name = distance_info.get("father_name")
-        print("%s 到 %s 的最短路径是 %d. %s 的 父节点名是 %s" % (start_node_name, node_name, distance, node_name, father_node_name))
+        else:
+            distance = distance_info.get("distance")
+            father_node_name = distance_info.get("father_name")
+            print("%s 到 %s 的最短路径是 %d. %s 的 父节点名是 %s" % (start_node_name, node_name, distance, node_name, father_node_name))
 
 
 def edge_in_circle():
@@ -308,4 +330,4 @@ def edge_in_circle():
 
 
 if __name__ == "__main__":
-    distance_2_all_node(start_node_name="V3")
+    distance_2_all_node_with_weight(start_node_name="V1")
