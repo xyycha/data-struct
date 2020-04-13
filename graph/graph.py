@@ -14,9 +14,10 @@ from heap import heap
     1. 针对无权重的图
         1. 类似拓扑思路
     2. 针对非负权重的图
-        1. pass
+        1. Dijkstra 算法
+            - 每次将最小权重值的节点 pop
     3. 针对含有负权重的图
-        1. pass
+        1. 
 """
 
 
@@ -183,6 +184,71 @@ class Graph(object):
                     node_heap.decrease_value(key=son_node_name, value=sub_distance)
         return status
 
+    def all_distances_with_negative_weight(self, start_node_name):
+        """
+        计算 含有负权值边 的 初始节点  到 所有节点的最短路径
+        :param start_node_name: 初始节点名
+        :return: 初始节点 到 所有节点的最短路径的 信息
+        """
+        if not self.check_node_exist(node_name=start_node_name):
+            assert False, "起始节点名字不在图中"
+        status = self.init_distance_status_with_negative_weight()
+        node_queue = deque()
+        node = self.node_name_2_node(node_name=start_node_name)
+        node_queue.append(node)
+        status[start_node_name]["queue"] = 1
+        status[start_node_name]["distance"] = 0
+        while node_queue:
+            next_node = node_queue.popleft()
+            next_node_name = next_node.name
+            status[next_node_name]["pop"] += 1
+            status[next_node_name]["queue"] = 0
+            if status[next_node_name]["pop"] == self._length + 1:
+                self.mark_negative_status(negative_node=next_node, status=status)
+                continue
+            for son_node, weight in next_node.son_weight.items():
+                son_node_name = son_node.name
+                if status[son_node_name]["negative"]:
+                    continue
+                new_distance = status[next_node_name]["distance"] + weight
+                if status[son_node_name]["distance"] is None:
+                    status[son_node_name]["distance"] = new_distance
+                    status[son_node_name]["father_name"] = next_node_name
+                    node_queue.append(son_node)
+                    status[son_node_name]["queue"] = 1
+                elif status[son_node_name]["distance"] > new_distance and status[son_node_name]["queue"]:
+                    status[son_node_name]["distance"] = new_distance
+                    status[son_node_name]["father_name"] = next_node_name
+                elif status[son_node_name]["distance"] > new_distance:
+                    status[son_node_name]["distance"] = new_distance
+                    status[son_node_name]["father_name"] = next_node_name
+                    node_queue.append(son_node)
+                    status[son_node_name]["queue"] = 1
+        return status
+
+    def mark_negative_status(self, negative_node, status):
+        """
+        标记 因负值圈无法计算的 所有节点
+        :param status: 节点的最短路径信息
+        :param negative_node: 起始节点
+        :return: None
+        """
+        node_name = negative_node.name
+        status[node_name]["negative"] = 1
+        for next_node in negative_node.son_weight.keys():
+            if not status[next_node.name]["negative"]:
+                self.mark_negative_status(negative_node=next_node, status=status)
+
+    def init_distance_status_with_negative_weight(self):
+        """
+        初始化 带有负权重 的 最短路径信息
+        :return: 初始化的最短路径信息
+        """
+        status = {}
+        for node_name in self._node_index.keys():
+            status[node_name] = {"pop": 0, "queue": 0, "distance": None, "father_name": "", "negative": 0}
+        return status
+
     def init_distance_status(self):
         """
         初始化 最短路径信息
@@ -208,126 +274,3 @@ class Graph(object):
             node_heap_list.append(heap_node)
         node_heap.build_heap(node_heap_list)
         return node_heap
-
-    def check_edge_in_circle(self, start_node, end_node, circle_path=None, res=None):
-        """
-        检查边是否在 圆环中
-        :param res: 所有圆环
-        :param start_node: 边的终点
-        :param end_node: 边的起点
-        :param circle_path: 圆环的节点路径
-        :return: 圆环路径
-        """
-        if res is None:
-            res = []
-        if circle_path is None:
-            circle_path = [end_node, start_node]
-        for next_node in start_node.son_weight.keys():
-            if next_node == end_node:
-                new_circle_path = circle_path + [next_node]
-                res.append(new_circle_path)
-            elif next_node in circle_path:
-                continue
-            else:
-                new_circle_path = circle_path + [next_node]
-            self.check_edge_in_circle(start_node=next_node, end_node=end_node, circle_path=new_circle_path, res=res)
-
-    def circle_weight(self, circles):
-        """
-        判断 所有的环是否 权重和大于 0
-        :param circles:
-        :return:
-        """
-        for circle in circles:
-            weight = 0
-            edge_nums = len(circle) - 1
-            for index in range(edge_nums):
-                start = circle[index]
-                print(start.name, end=" ")
-                end = circle[index + 1]
-                weight += start.son_weight[end]
-            print(end="\t")
-            print(weight)
-            if weight <= 0:
-                return False
-        return True
-
-
-def topology():
-    s = Graph()
-    s.add_edge(node_name="V1", son_node_names=["V2", "V3", "V4"])
-    s.add_edge(node_name="V2", son_node_names=["V4", "V5"])
-    s.add_edge(node_name="V3", son_node_names=["V6"])
-    s.add_edge(node_name="V4", son_node_names=["V3", "V6", "V7"])
-    s.add_edge(node_name="V5", son_node_names=["V4", "V7"])
-    s.add_edge(node_name="V7", son_node_names=["V6"])
-    res = s.topology()
-    print(res)
-
-
-def distance_2_all_node_without_weight(start_node_name):
-    """
-    拓扑排序 计算 无权重的 节点间最短距离
-    :param start_node_name: 起始节点名
-    :return: 最短距离信息
-    """
-    s = Graph()
-    s.add_edge(node_name="V1", son_node_names=["V2", "V4"], weights=[2, 1])
-    s.add_edge(node_name="V2", son_node_names=["V4", "V5"], weights=[3, 10])
-    s.add_edge(node_name="V3", son_node_names=["V1", "V6"], weights=[4, 5])
-    s.add_edge(node_name="V4", son_node_names=["V3", "V6", "V7", "V5"], weights=[2, 8, 4, 2])
-    s.add_edge(node_name="V5", son_node_names=["V7"], weights=[6])
-    s.add_edge(node_name="V7", son_node_names=["V6"], weights=[1])
-    distances = s.all_distances_without_weight(start_node_name=start_node_name)
-    for node_name, distance_info in distances.items():
-        if not distance_info.get("known"):
-            print("%s 到 %s 的路径不存在." % (start_node_name, node_name))
-        distance = distance_info.get("distance")
-        father_node_name = distance_info.get("father_name")
-        print("%s 到 %s 的最短路径是 %d. %s 的 父节点名是 %s" % (start_node_name, node_name, distance, node_name, father_node_name))
-
-
-def distance_2_all_node_with_weight(start_node_name):
-    """
-    Dijkstra 算法 计算 有权重的 节点间最短距离
-    :param start_node_name: 起始节点名
-    :return: 最短距离信息
-    """
-    s = Graph()
-    s.add_edge(node_name="V1", son_node_names=["V2", "V4"], weights=[2, 1])
-    s.add_edge(node_name="V2", son_node_names=["V4", "V5"], weights=[3, 10])
-    s.add_edge(node_name="V3", son_node_names=["V1", "V6"], weights=[4, 5])
-    s.add_edge(node_name="V4", son_node_names=["V3", "V6", "V7", "V5"], weights=[2, 8, 4, 2])
-    s.add_edge(node_name="V5", son_node_names=["V7"], weights=[6])
-    s.add_edge(node_name="V7", son_node_names=["V6"], weights=[1])
-    print("****************权重****************")
-    distances_with_weight = s.all_distances_with_weight(start_node_name=start_node_name)
-    for node_name, distance_info in distances_with_weight.items():
-        if not distance_info.get("known"):
-            print("%s 到 %s 的路径不存在." % (start_node_name, node_name))
-        else:
-            distance = distance_info.get("distance")
-            father_node_name = distance_info.get("father_name")
-            print("%s 到 %s 的最短路径是 %d. %s 的 父节点名是 %s" % (start_node_name, node_name, distance, node_name, father_node_name))
-
-
-def edge_in_circle():
-    s = Graph()
-    s.add_edge(node_name="V1", son_node_names=["V2", "V4"], weights=[2, 1])
-    s.add_edge(node_name="V2", son_node_names=["V5"], weights=[-10])
-    s.add_edge(node_name="V3", son_node_names=["V1", "V6"], weights=[4, 2])
-    s.add_edge(node_name="V4", son_node_names=["V2", "V3", "V6", "V7"], weights=[3, 5, 6, 2])
-    s.add_edge(node_name="V5", son_node_names=["V4", "V7"], weights=[1, 6])
-    s.add_edge(node_name="V7", son_node_names=["V6"], weights=[1])
-    v5_node = s.node_name_2_node(node_name="V5")
-    v2_node = s.node_name_2_node(node_name="V2")
-    all_circle = []
-    s.check_edge_in_circle(v5_node, v2_node, res=all_circle)
-    if not s.circle_weight(circles=all_circle):
-        print("负权重的边 不 可以使用")
-    else:
-        print("负权重的边可以使用")
-
-
-if __name__ == "__main__":
-    distance_2_all_node_with_weight(start_node_name="V1")
