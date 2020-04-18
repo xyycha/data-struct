@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from collections import deque
 from heap import heap
+from graphviz import Digraph
 """
 拓扑排序是对 有向 无圈图 的顶点的一种排序
 思路:
@@ -142,6 +143,9 @@ class Graph(object):
         status[start_node_name]["known"] = 1
         distance_known_nums = 1
         while distance_known_nums < self._length:
+            # 无法继续进行拓扑 将计算结果提前返回
+            if not node_know_queue:
+                return status
             father_node = node_know_queue.popleft()
             father_node_name = father_node.name
             last_distance = status[father_node_name]["distance"]
@@ -274,3 +278,16 @@ class Graph(object):
             node_heap_list.append(heap_node)
         node_heap.build_heap(node_heap_list)
         return node_heap
+
+    def show(self, file_name):
+        d = Digraph(filename=file_name, directory="./pdf_data")
+        d.clear()
+        # 将所有节点 画出
+        for node in self._nodes:
+            d.node(name=node.name, label=node.name)
+        for node in self._nodes:
+            father_name = node.name
+            for son, weight in node.son_weight.items():
+                son_name = son.name
+                d.edge(tail_name=father_name, head_name=son_name, label=str(weight))
+        d.view()

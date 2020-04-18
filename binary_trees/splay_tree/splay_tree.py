@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-from avl_tree.avl_tree import AVLTreeNode
+from binary_trees.avl_tree.avl_tree import AVLTreeNode
 
 
 """

@@ -6,7 +6,7 @@
 前序表达式 pop 第一个作为 父节点 左节点在前所以先 建立左子树   父左右
 后序表达式 pop 最后一个作为父节点 右节点在前所以先 建立右子树  左右父
 """
-from binary_tree.binary_tree_traversal import BinaryTree
+from binary_trees.binary_tree.binary_tree_traversal import BinaryTree
 
 
 class Node(object):

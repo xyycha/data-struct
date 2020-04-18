@@ -25,6 +25,6 @@ if __name__ == "__main__":
     import sys
     import os
 
-    sys.path.append(os.getcwd())
+    sys.path.append(os.path.dirname(os.getcwd()))
     from graph import Graph
     shortest_distances_without_weight(start_node_name="V1")
