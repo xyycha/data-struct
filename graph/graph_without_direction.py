@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from copy import deepcopy
 from graphviz import Digraph
 from heap import heap
 
@@ -125,7 +124,6 @@ class GraphWithoutDirection(object):
 
 graph_without_direction = GraphWithoutDirection()
 # 生成测试用例
-# 同时检验边只生成一次
 graph_without_direction.add_node(node_name="V1", near_node_names=["V2", "V4", "V3"], weights=[2, 1, 4])
 graph_without_direction.add_node(node_name="V2", near_node_names=["V1", "V4", "V5"], weights=[2, 3, 10])
 graph_without_direction.add_node(node_name="V3", near_node_names=["V1", "V4", "V6"], weights=[4, 2, 5])
