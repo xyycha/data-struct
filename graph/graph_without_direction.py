@@ -18,6 +18,24 @@ class EdgeWithoutDirection(object):
         self.nodes = {node1, node2}
         self.weight = weight
 
+    def get_another_node(self, node: NodeWithoutDirection):
+        node1, node2 = self.nodes
+        if node == node1:
+            return node2
+        return node1
+
+
+def pre_order(start_node: NodeWithoutDirection, node_status: dict, pre_order_list: list):
+    pre_order_list.append(start_node)
+    for edge in start_node.edges:
+        another_node = edge.get_another_node(node=start_node)
+        if not node_status[another_node]["num"]:
+            node_status[start_node]["direction_nodes"].append(another_node)
+            node_status[another_node]["num"] = node_status[start_node]["num"] + 1
+            pre_order(start_node=another_node, node_status=node_status, pre_order_list=pre_order_list)
+        elif start_node not in node_status[another_node]["direction_nodes"]:
+            node_status[start_node]["anti_direction_nodes"].append(another_node)
+
 
 class GraphWithoutDirection(object):
     def __init__(self):
@@ -120,6 +138,46 @@ class GraphWithoutDirection(object):
                     if group_id == all_index[1]:
                         node_names_known[index] = all_index[0]
         new_graph.show(file_name="Kruskal最小生成树")
+
+    def find_cut_vertex(self):
+        status = {}
+        pre_order_node_list = []
+        cut_vertex_list = []
+        start_node = self.nodes[0]
+        for node in self.nodes:
+            status[node] = {"num": 0 if node != start_node else 1,
+                            "low": 0 if node != start_node else 1,
+                            "direction_nodes": [],
+                            "anti_direction_nodes": []
+                            }
+        pre_order(start_node=start_node, node_status=status, pre_order_list=pre_order_node_list)
+        assert len(pre_order_node_list) == len(self.nodes), "图不连通"
+        for node in pre_order_node_list[::-1]:
+            anti_direction_nodes = status[node].get("anti_direction_nodes")
+            direction_nodes = status[node].get("direction_nodes")
+            if anti_direction_nodes:
+                min_num = len(self.nodes) + 1
+                for anti_direction_node in anti_direction_nodes:
+                    if status[anti_direction_node].get("num") < min_num:
+                        min_num = status[anti_direction_node].get("num")
+                status[node]["low"] = min_num
+            elif not direction_nodes:
+                status[node]["low"] = status[node]["num"]
+                continue
+            else:
+                min_num = status[node]["num"]
+                for direction_node in direction_nodes:
+                    if status[direction_node]["low"] < min_num:
+                        min_num = status[direction_node]["low"]
+                status[node]["low"] = min_num
+            if node == pre_order_node_list[0]:
+                cut_vertex_list += node.name if len(status[node]["direction_nodes"]) > 1 else []
+                continue
+            for direction_node in direction_nodes:
+                if status[direction_node]["low"] >= status[node]["num"]:
+                    cut_vertex_list.append(node.name)
+                    break
+        return cut_vertex_list
 
 
 graph_without_direction = GraphWithoutDirection()
