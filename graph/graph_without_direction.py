@@ -1,4 +1,6 @@
 # -*- encoding: utf-8 -*-
+from collections import deque
+
 from graphviz import Digraph
 from heap import heap
 
@@ -12,6 +14,16 @@ class NodeWithoutDirection(object):
         assert edge not in self.edges, "边已经存在"
         self.edges.add(edge)
 
+    def sub_edge(self, edge):
+        assert edge in self.edges, "节点没有该边"
+        self.edges = self.edges - {edge}
+
+    def get_edge(self, node):
+        for edge in self.edges:
+            if edge.nodes == {self, node}:
+                return edge
+        assert False, "与该节点没有边"
+
 
 class EdgeWithoutDirection(object):
     def __init__(self, node1: NodeWithoutDirection, node2: NodeWithoutDirection, weight):
@@ -19,6 +31,8 @@ class EdgeWithoutDirection(object):
         self.weight = weight
 
     def get_another_node(self, node: NodeWithoutDirection):
+        assert node in self.nodes, "节点不属于边"
+        # (self.nodes - {node}).pop()
         node1, node2 = self.nodes
         if node == node1:
             return node2
@@ -32,8 +46,10 @@ def pre_order(start_node: NodeWithoutDirection, node_status: dict, pre_order_lis
         if not node_status[another_node]["num"]:
             node_status[start_node]["direction_nodes"].append(another_node)
             node_status[another_node]["num"] = len(pre_order_list) + 1
+            node_status[another_node]["father"] = start_node
             pre_order(start_node=another_node, node_status=node_status, pre_order_list=pre_order_list)
-        elif start_node not in node_status[another_node]["direction_nodes"]:
+        elif start_node not in node_status[another_node]["direction_nodes"] and \
+                node_status[another_node]["num"] < node_status[start_node]["num"]:
             node_status[start_node]["anti_direction_nodes"].append(another_node)
 
 
@@ -44,7 +60,9 @@ class GraphWithoutDirection(object):
         self.node_name_2_node_index = {}
         self.edges = []
 
-    def add_node(self, node_name: str, near_node_names: list, weights: list):
+    def add_node(self, node_name: str, near_node_names: list, weights: list = None):
+        if weights is None:
+            weights = [1 for _ in near_node_names]
         assert len(near_node_names) == len(weights), "参数个数不一致"
         node_names = [node_name] + near_node_names
         weights = [0] + weights
@@ -138,37 +156,36 @@ class GraphWithoutDirection(object):
                         node_names_known[index] = all_index[0]
         new_graph.show(file_name="Kruskal最小生成树")
 
-    def find_cut_vertex(self):
+    def depth_first_search(self, start_node: NodeWithoutDirection = None, connect_check: bool = True):
         status = {}
         pre_order_node_list = []
         cut_vertex_list = []
-        start_node = self.nodes[0]
+        if start_node is None:
+            start_node = self.nodes[0]
         for node in self.nodes:
             status[node] = {"num": 0 if node != start_node else 1,
-                            "low": 0 if node != start_node else 1,
+                            "low": len(self.nodes) if node != start_node else 1,
                             "direction_nodes": [],
-                            "anti_direction_nodes": []
+                            "anti_direction_nodes": [],
+                            "father": None
                             }
         pre_order(start_node=start_node, node_status=status, pre_order_list=pre_order_node_list)
-        assert len(pre_order_node_list) == len(self.nodes), "图不连通"
+        if connect_check:
+            assert len(pre_order_node_list) == len(self.nodes), "图不连通"
         for node in pre_order_node_list[::-1]:
             anti_direction_nodes = status[node].get("anti_direction_nodes")
             direction_nodes = status[node].get("direction_nodes")
             if anti_direction_nodes:
-                min_num = len(self.nodes) + 1
                 for anti_direction_node in anti_direction_nodes:
-                    if status[anti_direction_node].get("num") < min_num:
-                        min_num = status[anti_direction_node].get("num")
-                status[node]["low"] = min_num
+                    if status[anti_direction_node].get("num") < status[node]["low"]:
+                        status[node]["low"] = status[anti_direction_node].get("num")
             elif not direction_nodes:
                 status[node]["low"] = status[node]["num"]
                 continue
-            else:
-                min_num = status[node]["num"]
+            if direction_nodes:
                 for direction_node in direction_nodes:
-                    if status[direction_node]["low"] < min_num:
-                        min_num = status[direction_node]["low"]
-                status[node]["low"] = min_num
+                    if status[direction_node]["low"] < status[node]["low"]:
+                        status[node]["low"] = status[direction_node]["low"]
             if node == pre_order_node_list[0]:
                 cut_vertex_list += [node.name] if len(status[node]["direction_nodes"]) > 1 else []
                 continue
@@ -176,7 +193,95 @@ class GraphWithoutDirection(object):
                 if status[direction_node]["low"] >= status[node]["num"]:
                     cut_vertex_list.append(node.name)
                     break
+        return status, cut_vertex_list
+
+    def find_cut_vertex(self):
+        _, cut_vertex_list = self.depth_first_search()
         return cut_vertex_list
+
+    def check_euler_circuit(self):
+        """
+        检验 欧拉回路是否存在 三种情况
+        1. 节点的度 全部为偶数 True
+        2. 节点的度 为 奇数的个数 大于 2 False
+        3. 节点的度 为 奇数的个数 等于 2 Half True
+        :return: bool, None or List
+        """
+        edges_num = [len(node.edges) % 2 for node in self.nodes]
+        odd_edges_nodes = []
+        for index, edge_num in enumerate(edges_num):
+            if edge_num == 1:
+                odd_edges_nodes.append(self.nodes[index])
+            if len(odd_edges_nodes) > 2:
+                return False, None
+        if not odd_edges_nodes:
+            return True, None
+        if len(odd_edges_nodes) == 2:
+            return True, odd_edges_nodes
+
+    def find_euler_circuit(self):
+        status, nodes = self.check_euler_circuit()
+        if not status:
+            return []
+        if not nodes:
+            start_node = self.nodes[0]
+            return self._find_euler_circuit(start=start_node)
+        base_path = self._find_path_by_topology(start=nodes[0], end=nodes[1])
+        return self._find_euler_circuit(start=nodes[0], euler_circuit=base_path)
+
+    def _find_euler_circuit(self, start: NodeWithoutDirection, euler_circuit: list = None):
+        if euler_circuit is None:
+            euler_circuit = []
+        index = 0
+        while index >= 0:
+            circle = self._find_path_by_topology(start=start)
+            euler_circuit = euler_circuit[:index] + circle + euler_circuit[index + 1:]
+            for i in range(index, len(euler_circuit) + 1):
+                if i == len(euler_circuit):
+                    index = -1
+                elif len(euler_circuit[i].edges) >= 2:
+                    index = i
+                    start = euler_circuit[index]
+                    break
+        return euler_circuit
+
+    def _find_path_by_topology(self, start: NodeWithoutDirection, end: NodeWithoutDirection = None):
+        """
+        第一版失败
+        :param start:
+        :param end:
+        :return:
+        """
+        status, _ = self.depth_first_search(start_node=start, connect_check=False)
+        target_node, target_num = None, 1
+        for node, info in status.items():
+            node_num = info.get("num")
+            node_low = info.get("low")
+            if end and node == end:
+                target_node = node
+                break
+            if node_num > target_num and node_low == 1:
+                target_node = node
+                target_num = node_num
+        path = []
+        last_node = target_node
+        while target_node != start:
+            path.append(target_node)
+            father_node = status[target_node].get("father")
+            edge = target_node.get_edge(node=father_node)
+            target_node.sub_edge(edge=edge)
+            edge = father_node.get_edge(node=target_node)
+            father_node.sub_edge(edge=edge)
+            target_node = father_node
+        path.append(start)
+        path = list(reversed(path))
+        if end is None:
+            path.append(start)
+            edge = last_node.get_edge(node=start)
+            last_node.sub_edge(edge=edge)
+            edge = start.get_edge(node=last_node)
+            start.sub_edge(edge=edge)
+        return path
 
 
 graph_without_direction = GraphWithoutDirection()
