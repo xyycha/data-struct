@@ -31,7 +31,7 @@ def pre_order(start_node: NodeWithoutDirection, node_status: dict, pre_order_lis
         another_node = edge.get_another_node(node=start_node)
         if not node_status[another_node]["num"]:
             node_status[start_node]["direction_nodes"].append(another_node)
-            node_status[another_node]["num"] = node_status[start_node]["num"] + 1
+            node_status[another_node]["num"] = len(pre_order_list) + 1
             pre_order(start_node=another_node, node_status=node_status, pre_order_list=pre_order_list)
         elif start_node not in node_status[another_node]["direction_nodes"]:
             node_status[start_node]["anti_direction_nodes"].append(another_node)
@@ -60,7 +60,6 @@ class GraphWithoutDirection(object):
                 new_edge = EdgeWithoutDirection(node1=node1, node2=node2, weight=weights[index])
                 self.edges.append(new_edge)
                 node1.add_edge(edge=new_edge)
-                node2.add_edge(edge=new_edge)
 
     def get_min_node_name(self):
         return min(self.node_names)
@@ -171,7 +170,7 @@ class GraphWithoutDirection(object):
                         min_num = status[direction_node]["low"]
                 status[node]["low"] = min_num
             if node == pre_order_node_list[0]:
-                cut_vertex_list += node.name if len(status[node]["direction_nodes"]) > 1 else []
+                cut_vertex_list += [node.name] if len(status[node]["direction_nodes"]) > 1 else []
                 continue
             for direction_node in direction_nodes:
                 if status[direction_node]["low"] >= status[node]["num"]:
