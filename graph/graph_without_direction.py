@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from collections import deque
 
 from graphviz import Digraph
 from heap import heap
@@ -40,6 +39,13 @@ class EdgeWithoutDirection(object):
 
 
 def pre_order(start_node: NodeWithoutDirection, node_status: dict, pre_order_list: list):
+    """
+    先序遍历
+    :param start_node: 开始节点
+    :param node_status: 所有节点的状态
+    :param pre_order_list: 先序遍历节点的顺序
+    :return: None
+    """
     pre_order_list.append(start_node)
     for edge in start_node.edges:
         another_node = edge.get_another_node(node=start_node)
@@ -61,6 +67,13 @@ class GraphWithoutDirection(object):
         self.edges = []
 
     def add_node(self, node_name: str, near_node_names: list, weights: list = None):
+        """
+        添加节点
+        :param node_name: 新节点名
+        :param near_node_names: 新节点相邻的节点名列表
+        :param weights: 对应的权重值
+        :return: None
+        """
         if weights is None:
             weights = [1 for _ in near_node_names]
         assert len(near_node_names) == len(weights), "参数个数不一致"
@@ -79,10 +92,12 @@ class GraphWithoutDirection(object):
                 self.edges.append(new_edge)
                 node1.add_edge(edge=new_edge)
 
-    def get_min_node_name(self):
-        return min(self.node_names)
-
     def show(self, file_name):
+        """
+        将无向图转化为pdf 好检查结果
+        :param file_name: pdf名字
+        :return: None
+        """
         d = Digraph(filename=file_name, directory="./pdf_data")
         d.clear()
         edges_known = []
@@ -98,6 +113,11 @@ class GraphWithoutDirection(object):
         d.view()
 
     def min_span_tree_by_prim(self):
+        """
+        最少生成树
+        所有已知点 和 未知点的最小权重边加到图中，直到所有的节点都加到图中为止
+        :return: None
+        """
         new_graph = GraphWithoutDirection()
         node_names_known = {min(self.node_names)}
         while len(node_names_known) != len(self.node_names):
@@ -124,6 +144,8 @@ class GraphWithoutDirection(object):
 
     def min_span_tree_by_kruskal(self):
         """
+        最小生成树  寻找最小权重的边加到图中
+        条件就是 不能形成环，直到所有节点都被连接停止
         未使用 Find/Join 模型
         :return: None
         """
@@ -157,6 +179,12 @@ class GraphWithoutDirection(object):
         new_graph.show(file_name="Kruskal最小生成树")
 
     def depth_first_search(self, start_node: NodeWithoutDirection = None, connect_check: bool = True):
+        """
+        先序遍历和后续遍历 所有节点 计算 Num值和Low值
+        :param start_node: 开始节点
+        :param connect_check: 是否检查图的连通性(默认是检查的，但是寻找欧拉路径是可以不连通的)
+        :return: 返回所有节点的信息 和 截点的列表
+        """
         status = {}
         pre_order_node_list = []
         cut_vertex_list = []
@@ -196,6 +224,10 @@ class GraphWithoutDirection(object):
         return status, cut_vertex_list
 
     def find_cut_vertex(self):
+        """
+        借助 深度优先搜索 查询 割点
+        :return: 割点列表
+        """
         _, cut_vertex_list = self.depth_first_search()
         return cut_vertex_list
 
@@ -204,7 +236,7 @@ class GraphWithoutDirection(object):
         检验 欧拉回路是否存在 三种情况
         1. 节点的度 全部为偶数 True
         2. 节点的度 为 奇数的个数 大于 2 False
-        3. 节点的度 为 奇数的个数 等于 2 Half True
+        3. 节点的度 为 奇数的个数 等于 2 Half True（严格意义上不是欧拉回路但是可以经过所有的边，但是回不到初始的节点）
         :return: bool, None or List
         """
         edges_num = [len(node.edges) % 2 for node in self.nodes]
@@ -220,6 +252,10 @@ class GraphWithoutDirection(object):
             return True, odd_edges_nodes
 
     def find_euler_circuit(self):
+        """
+        寻找欧拉回路
+        :return: 欧拉回路的节点名
+        """
         status, nodes = self.check_euler_circuit()
         if not status:
             return []
@@ -230,6 +266,15 @@ class GraphWithoutDirection(object):
         return self._find_euler_circuit(start=nodes[0], euler_circuit=base_path)
 
     def _find_euler_circuit(self, start: NodeWithoutDirection, euler_circuit: list = None):
+        """
+        :param start: 从哪个节点开始 寻找欧拉路径。
+        如果所有节点的度都是 偶数 那么 开始的节点随意
+        但是 仅有两个节点的度是 奇数 那么 开始的节点必须是这两个节点的其中一个
+        :param euler_circuit: 基础的欧拉回路
+        如果所有节点的度都是 偶数 那么 开始的欧拉回路的列表是空
+        但是 仅有两个节点的度是 奇数 那么 开始的欧拉回路是这两个节点的通路路径
+        :return: 欧拉回路
+        """
         if euler_circuit is None:
             euler_circuit = []
         index = 0
@@ -247,10 +292,12 @@ class GraphWithoutDirection(object):
 
     def _find_path_by_topology(self, start: NodeWithoutDirection, end: NodeWithoutDirection = None):
         """
-        第一版失败
-        :param start:
-        :param end:
-        :return:
+        寻找从开始节点到结束节点的路径
+        当结束节点为空时 寻找开始节点到本身的闭环路径
+        并将路径所经过的边 在图中删除 防止重复使用
+        :param start: 开始节点
+        :param end: 结束节点
+        :return: 路径
         """
         status, _ = self.depth_first_search(start_node=start, connect_check=False)
         target_node, target_num = None, 1
@@ -282,16 +329,3 @@ class GraphWithoutDirection(object):
             edge = start.get_edge(node=last_node)
             start.sub_edge(edge=edge)
         return path
-
-
-graph_without_direction = GraphWithoutDirection()
-# 生成测试用例
-graph_without_direction.add_node(node_name="V1", near_node_names=["V2", "V4", "V3"], weights=[2, 1, 4])
-graph_without_direction.add_node(node_name="V2", near_node_names=["V1", "V4", "V5"], weights=[2, 3, 10])
-graph_without_direction.add_node(node_name="V3", near_node_names=["V1", "V4", "V6"], weights=[4, 2, 5])
-graph_without_direction.add_node(node_name="V4", near_node_names=["V1", "V3", "V6", "V7", "V5", "V2"], weights=[1, 2, 8, 4, 7, 3])
-graph_without_direction.add_node(node_name="V5", near_node_names=["V2", "V4", "V7"], weights=[10, 7, 6])
-graph_without_direction.add_node(node_name="V6", near_node_names=["V3", "V4", "V7"], weights=[5, 8, 1])
-graph_without_direction.add_node(node_name="V7", near_node_names=["V6", "V4", "V5"], weights=[1, 4, 6])
-graph_without_direction.show(file_name="初始无向图")
-
