@@ -73,12 +73,27 @@ def quick_sort(nums):
     return new_nums
 
 
+def quick_sort_top_k(nums, k, one=False):
+    core = find_core(nums=nums)
+    mid_nums = nums[core]
+    left, right = split_nums(nums=nums, core=core)
+    top_num = len(right)
+    if top_num == k - 1:
+        return [mid_nums] + right if not one else mid_nums
+    elif top_num > k - 1:
+        return quick_sort_top_k(right, k)
+    else:
+        return quick_sort_top_k(left, k - top_num - 1) + [mid_nums] + right if not one else quick_sort_top_k(left, k - top_num - 1)
+
+
 if __name__ == "__main__":
     import random
 
     s = []
-    for i in range(20):
+    for i in range(10):
         s.append(random.randint(0, 100))
-    print(s)
-    res = quick_sort(s)
+    print(sorted(s))
+    res = quick_sort_top_k(nums=s, k=5)
+    print(res)
+    res = quick_sort_top_k(nums=s, k=5, one=True)
     print(res)
